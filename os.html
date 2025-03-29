@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fájlkezelő és Zenelejátszó</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #F4F4F4;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+        }
+
+        /* Ablak stílus */
+        .window {
+            width: 400px;
+            height: 400px;
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            position: absolute;
+            top: 50px;
+            left: 50px;
+            display: none;
+            transition: all 0.3s ease;
+        }
+
+        .window-header {
+            background-color: #0078D4;
+            color: white;
+            padding: 16px;
+            font-weight: bold;
+            border-radius: 8px 8px 0 0;
+            cursor: move;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .window-header button {
+            background-color: transparent;
+            border: none;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        .window-content {
+            padding: 20px;
+            background-color: #f9f9f9;
+            border-radius: 0 0 8px 8px;
+            height: calc(100% - 60px);
+            overflow: auto;
+        }
+
+        .window-button {
+            background-color: #0078D4;
+            border: 1px solid #0078D4;
+            color: white;
+            padding: 8px 16px;
+            cursor: pointer;
+            border-radius: 6px;
+            margin: 5px;
+            transition: background-color 0.3s;
+        }
+
+        .window-button:hover {
+            background-color: #005A8D;
+        }
+
+        /* Zenelejátszó */
+        .audio-player {
+            width: 100%;
+            height: 200px;
+            background-color: #f1f1f1;
+            border-radius: 8px;
+            padding: 10px;
+        }
+
+        iframe {
+            width: 100%;
+            height: 200px;
+        }
+
+        /* Start menü */
+        #start-menu {
+            position: absolute;
+            bottom: 70px;
+            left: 0;
+            background-color: #0078D4;
+            color: white;
+            width: 250px;
+            display: none;
+            z-index: 100;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        #start-button {
+            background-color: #0078D4;
+            color: white;
+            width: 250px;
+            padding: 16px;
+            font-size: 18px;
+            cursor: pointer;
+            text-align: center;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            transition: background-color 0.3s;
+        }
+
+        #start-button:hover {
+            background-color: #005A8D;
+        }
+
+        /* Taskbar */
+        .taskbar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background-color: #0078D4;
+            color: white;
+            padding: 12px;
+            display: flex;
+            justify-content: flex-start;
+            align-items: center;
+            font-size: 16px;
+            box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .taskbar .start {
+            margin-left: 20px;
+            cursor: pointer;
+            padding: 12px;
+            border-radius: 8px;
+            transition: background-color 0.3s;
+        }
+
+        .taskbar .start:hover {
+            background-color: #005A8D;
+        }
+
+        /* Idő */
+        .time {
+            margin-left: auto;
+            margin-right: 20px;
+        }
+
+        /* Reszponzív dizájn */
+        @media (max-width: 600px) {
+            .window {
+                width: 100%;
+                height: 300px;
+            }
+
+            #start-button {
+                width: 100%;
+            }
+
+            #start-menu {
+                width: 100%;
+                left: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Start menü -->
+    <div id="start-menu">
+        <button class="window-button" onclick="openApp('file-manager')">Fájlkezelő</button>
+        <button class="window-button" onclick="openApp('music-player')">Zenelejátszó</button>
+        <button class="window-button" onclick="openApp('cmd')">Parancssor</button>
+        <button class="window-button" onclick="openApp('help')">Help</button>
+        <button class="window-button" onclick="openApp('settings')">Beállítások</button> <!-- Beállítások gomb hozzáadása -->
+    </div>
+
+    <div id="start-button" onclick="toggleStartMenu()">Start</div>
+
+    <!-- Fájlkezelő ablak -->
+    <div id="file-manager" class="window">
+        <div class="window-header" onmousedown="dragMouseDown(event, 'file-manager')">
+            Fájlkezelő <button class="window-button" onclick="closeApp('file-manager')">X</button>
+        </div>
+        <div class="window-content">
+            <h2>Fájlkezelő tartalom</h2>
+            <p>dokumentumok,letőlések,videoók.</p>
+        </div>
+    </div>
+
+    <!-- Zenelejátszó ablak -->
+    <div id="music-player" class="window">
+        <div class="window-header" onmousedown="dragMouseDown(event, 'music-player')">
+            Zenelejátszó <button class="window-button" onclick="closeApp('music-player')">X</button>
+        </div>
+        <div class="window-content">
+            <h3>Zenelejátszó</h3>
+            <div class="audio-player">
+                <iframe src="https://www.youtube.com/embed/Jr3wBleYrpM?autoplay=1" frameborder="0" allow="autoplay; encrypted-media"></iframe>
+            </div>
+        </div>
+    </div>
+
+    <!-- Parancssor ablak -->
+    <div id="cmd" class="window">
+        <div class="window-header" onmousedown="dragMouseDown(event, 'cmd')">
+            Parancssor <button class="window-button" onclick="closeApp('cmd')">X</button>
+        </div>
+        <div class="window-content">
+            <textarea id="cmd-output" cols="40" rows="10" readonly></textarea>
+            <br>
+            <input type="text" id="cmd-input" placeholder="Írd be a parancsot...">
+            <button class="window-button" onclick="runCmd()">Futtatás</button>
+        </div>
+    </div>
+
+    <!-- Help ablak -->
+    <div id="help" class="window">
+        <div class="window-header" onmousedown="dragMouseDown(event, 'help')">
+            Help <button class="window-button" onclick="closeApp('help')">X</button>
+        </div>
+        <div class="window-content">
+            <h3>Parancssori segédlet</h3>
+            <ul>
+                <li><strong>dir</strong> – Listázza a fájlokat és mappákat</li>
+                <li><strong>cls</strong> – Törli a képernyőt</li>
+                <li><strong>cd [mappa]</strong> – Mappaváltás</li>
+                <li><strong>exit</strong> – Kilépés</li>
+                <li><strong>mkdir [mappa]</strong> – Új mappa létrehozása</li>
+                <li><strong>del [fájl]</strong> – Fájl törlése</li>
+                <li><strong>echo [szöveg]</strong> – Szöveg kiírása</li>
+                <li><strong>copy [forrás] [cél]</strong> – Fájl másolása</li>
+                <li><strong>move [forrás] [cél]</strong> – Fájl áthelyezése</li>
+                <li><strong>rmdir [mappa]</strong> – Mappa törlése</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Beállítások ablak -->
+    <div id="settings" class="window">
+        <div class="window-header" onmousedown="dragMouseDown(event, 'settings')">
+            Beállítások <button class="window-button" onclick="closeApp('settings')">X</button>
+        </div>
+        <div class="window-content">
+            <h3>Háttérszín és betűtípus beállítása</h3>
+            <label for="background-color">Háttérszín:</label>
+            <input type="color" id="background-color" value="#F4F4F4">
+            <br><br>
+            <label for="font">Betűtípus:</label>
+            <select id="font">
+                <option value="Segoe UI">Segoe UI</option>
+                <option value="Tahoma">Tahoma</option>
+                <option value="Verdana">Verdana</option>
+            </select>
+            <br><br>
+            <button class="window-button" onclick="applySettings()">Alkalmaz</button>
+        </div>
+    </div>
+
+    <!-- Taskbar -->
+    <div class="taskbar">
+        <div class="start" onclick="toggleStartMenu()">Start</div>
+        <div class="time" id="time"></div>
+    </div>
+
+    <script>
+        let isStartMenuOpen = false;
+        
+        // Start menü
+        function toggleStartMenu() {
+            isStartMenuOpen = !isStartMenuOpen;
+            document.getElementById('start-menu').style.display = isStartMenuOpen ? 'block' : 'none';
+        }
+
+        function openApp(appId) {
+            document.getElementById(appId).style.display = 'block';
+            closeStartMenu();
+        }
+
+        function closeApp(appId) {
+            document.getElementById(appId).style.display = 'none';
+        }
+
+        function closeStartMenu() {
+            isStartMenuOpen = false;
+            document.getElementById('start-menu').style.display = 'none';
+        }
+
+        // Parancssor
+        function runCmd() {
+            const input = document.getElementById('cmd-input').value;
+            const output = document.getElementById('cmd-output');
+            if (input === 'exit') {
+                closeApp('cmd');
+            } else {
+                output.value += '\n' + input;
+            }
+        }
+
+        // Beállítások alkalmazása
+        function applySettings() {
+            const backgroundColor = document.getElementById('background-color').value;
+            const font = document.getElementById('font').value;
+
+            document.body.style.backgroundColor = backgroundColor;
+            document.body.style.fontFamily = font;
+        }
+
+        // Ablak mozgatás
+        let currentDrag = null;
+
+        function dragMouseDown(e, windowId) {
+            e = e || window.event;
+            e.preventDefault();
+            currentDrag = windowId;
+
+            let offsetX = e.clientX;
+            let offsetY = e.clientY;
+
+            function moveMouse(e) {
+                e = e || window.event;
+                e.preventDefault();
+
+                const windowElement = document.getElementById(currentDrag);
+                windowElement.style.left = windowElement.offsetLeft - (offsetX - e.clientX) + "px";
+                windowElement.style.top = windowElement.offsetTop - (offsetY - e.clientY) + "px";
+                offsetX = e.clientX;
+                offsetY = e.clientY;
+            }
+
+            function stopDrag() {
+                document.removeEventListener('mousemove', moveMouse);
+                document.removeEventListener('mouseup', stopDrag);
+            }
+
+            document.addEventListener('mousemove', moveMouse);
+            document.addEventListener('mouseup', stopDrag);
+        }
+
+        // Idő frissítése
+        function updateTime() {
+            const now = new Date();
+            const hours = now.getHours().toString().padStart(2, '0');
+            const minutes = now.getMinutes().toString().padStart(2, '0');
+            const seconds = now.getSeconds().toString().padStart(2, '0');
+            document.getElementById('time').textContent = `${hours}:${minutes}:${seconds}`;
+        }
+
+        setInterval(updateTime, 1000);
+    </script>
+</body>
+</html>
